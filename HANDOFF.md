@@ -1,14 +1,78 @@
 # Analog Quest — Handoff
 
 **Last substantive update:** 2026-04-12 (bulk of doc below)
-**Most recent session:** 2026-04-24/25 — macro-expansion experiment,
-documented below under "Session log". Read that section first if you're
-picking up the project next.
+**Most recent session:** 2026-09-05 — revival dive: full state
+verification, `docs/STATE-2026.md` + `docs/FUTURES-2026.md` written,
+weekly operating cadence begins. Read that session log first, then the
+2026-07-05 log (the atlas pivot), if you're picking up the project next.
 **Repo:** https://github.com/currentlycurrently/analog-quest
 **Live site:** https://analog.quest
 **Stack:** Next.js 15 + TypeScript, PostgreSQL (Neon) + pgvector, Vercel,
 Python pipeline (SymPy), NextAuth v5 with GitHub OAuth, Upstash Redis for
 rate limiting.
+
+---
+
+## Session log — 2026-09-05 (revival: dive phase, state + futures memos)
+
+The project was picked back up after exactly two months quiet, under a
+charter from the owner: weekly operating cycles, lead agent runs cadence,
+owner is admin/moderator and tie-breaker. This session was the dive phase.
+
+**What was verified (everything re-checked, not inherited):**
+- Live site healthy; `/atlas` serving the 60-paper pilot; `/discoveries`
+  307→`/atlas` is the intentional redirect, not a bug.
+- **`/api/queue/status` 500s — root cause found:** the route queries
+  `contributors.last_seen` but the live table has `last_seen_at`
+  (auth schema superseded the old one). One-line fix, awaiting owner
+  review before deploy.
+- Prod DB surveyed read-only: 1,830 papers / 39,054 equations (53.4%
+  parse — exactly as documented) / 63 atlas classifications, all from
+  2026-07-05 / **moderation_log, trivia lists, trivial_hashes all empty —
+  no moderation pass has ever run** / the single contributor row has role
+  `contributor`: **the admin promotion was never done, so nobody can
+  moderate**. cli_tokens: 0 — the volunteer thesis remains untested.
+- Prod env is complete (NextAuth + GitHub OAuth vars set) — the April
+  "auth may not work in prod" note below is stale. Sign-in itself not
+  browser-tested this session.
+- Fresh clone: `npm run build` clean; all 47 pipeline tests pass.
+- **Atlas experiment numbers reproduce**: re-ran `evaluate.py` on the
+  committed artifacts → 0.93 / 9-15 strict / 14-15 equiv / C3 pass,
+  identical to the analysis file. Note: the *committed*
+  `atlas/results/report.md` holds the Haiku A/B output (0.90/13-15), not
+  the Fable run — regenerate or label it when next touched.
+- **Landscape re-checked on the web (2026-09-05): the four-part niche is
+  still unoccupied.** Romiti dormant (repo last commit 2026-05-15, still
+  physics-only); Discovery Engine still v1, absent from AII's own July
+  2026 newsletter. New since July: IsoSci (arXiv:2607.01431), a
+  cross-domain isomorphism *benchmark* — adjacent and supportive, not
+  competitive; cite it in any write-up. Details in the landscape section
+  of `docs/STATE-2026.md`.
+
+**What was written:**
+- `docs/STATE-2026.md` — the verified state of the project (deliverable 1).
+- `docs/FUTURES-2026.md` — four futures with costs and 90-day shapes
+  (deliverable 2). Recommendation: operate the atlas (A), then publish
+  the flag-planting write-up (B); recruitment (C) after B; substrate
+  research (D) deferred with the model-generation tripwire kept. Includes
+  the chartered SymPy-pipeline recommendation: honestly-labeled legacy
+  extraction layer.
+- `docs/GENESIS.draft.md` — draft origin-story section, owner decides
+  whether/where it lands.
+
+**Not done, deliberately:** no prod writes (read-only grant), no deploys
+(owner reviews site changes first), no classification runs (cost approval
+first), no README rewrite yet (bundled for owner review with the
+queue/status fix as cycle-1 items).
+
+**For the first weekly session, in order:** (1) owner picks a future from
+the memo; (2) the 5-minute admin unblock — sign in at analog.quest, run
+`UPDATE contributors SET role='admin' WHERE github_login='<owner login>';`,
+sign out/in; (3) review+approve the queue/status one-liner and the README
+realignment; (4) decide the classification write path (a CLI token
+through the app's own API is the designed one) and approve the backlog
+classification budget (Haiku-class, single-digit dollars for 1,770
+papers, per-batch spot-checks with a pre-registered precision criterion).
 
 ---
 

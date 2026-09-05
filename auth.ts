@@ -20,6 +20,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      // GitHub silently began sending an RFC 9207 `iss` parameter on OAuth
+      // callbacks (April 2026 rollout); next-auth <= 5.0.0-beta.31 without a
+      // configured issuer validates it against the "https://authjs.dev"
+      // placeholder and rejects every sign-in. Value per the upstream fix
+      // (nextauthjs/next-auth#13410); drop this when upgrading past beta.30.
+      issuer: 'https://github.com/login/oauth',
     }),
   ],
   session: {

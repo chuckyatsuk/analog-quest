@@ -26,7 +26,7 @@ export async function GET() {
     query<{ total: string; active_today: string }>(`
       SELECT
         COUNT(*) as total,
-        COUNT(*) FILTER (WHERE last_seen > NOW() - INTERVAL '24 hours') as active_today
+        COUNT(*) FILTER (WHERE last_seen_at > NOW() - INTERVAL '24 hours') as active_today
       FROM contributors
     `),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM papers`),

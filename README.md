@@ -1,87 +1,121 @@
 # Analog Quest
 
-A research tool that finds cases where different scientific fields are solving
-the exact same equation under different names.
+A research tool that maps cases where different scientific fields are using
+the same mathematical structure under different names.
 
-**[analog.quest](https://analog.quest)** · [contribute](https://analog.quest/contribute) · [discoveries](https://analog.quest/discoveries) · [moderation policy](https://analog.quest/moderation)
+**[analog.quest](https://analog.quest)** · [the atlas](https://analog.quest/atlas) · [contribute](https://analog.quest/contribute) · [moderation policy](https://analog.quest/moderation)
 
 ---
 
 ## What it does
 
-Analog Quest downloads arXiv LaTeX source, extracts every equation, parses them
-into canonical SymPy form, and matches structural equivalents across scientific
-domains. Matches are labeled by tier:
+Analog Quest classifies each paper's **core mathematical model** against a
+library of ~50 canonical structures (the logistic equation, Kuramoto
+oscillators, the Fokker–Planck equation, …). When papers from different
+fields land on the same structure, that's a **cross-field bridge** — the same
+mathematics wearing two vocabularies — and it surfaces in the public
+[atlas](https://analog.quest/atlas).
 
-- **Tier 1 — syntactic:** the pipeline's default output. Two equations from
-  different domains normalize to the same canonical form. A candidate, not a
-  discovery.
-- **Tier 2 — structural:** a moderator has confirmed the shared form reflects
-  the same mathematical structure in both source contexts.
+Classification is done by AI agents reading the paper in isolation;
+judgment about whether a bridge is *interesting* stays human. Bridges over
+textbook objects everyone already shares (gradient descent, Nash equilibria)
+can be flagged as trivia by moderators and hidden from the atlas — a
+non-destructive, logged, reversible action. Candidate findings are labeled
+by tier, and the tiers mean what they say:
+
+- **Tier 1 — candidate:** the system's default output. Same canonical
+  structure, different fields. A candidate, not a discovery.
+- **Tier 2 — structural:** a moderator has confirmed the shared structure is
+  real in both source contexts, with a written note.
 - **Tier 3 — transferable:** a moderator has argued theory or methods could
-  plausibly transfer between the two domains.
-- **Tier 4 — validated:** a domain expert has confirmed the match as a
+  plausibly transfer between the fields.
+- **Tier 4 — validated:** a domain expert has confirmed the connection as a
   substantive cross-domain hypothesis. Currently empty.
-
-Every match shows its hash frequency — how many equations, papers, and domains
-contain the same canonical form across the corpus. Low frequency suggests a
-rare structural rhyme. High frequency suggests a textbook object. Moderators
-rejecting matches as "standard canonical object" add the canonical form to a
-trivia list, and future matches on the same form are never generated.
 
 Full policy: [analog.quest/moderation](https://analog.quest/moderation).
 
----
+## How we know the substrate works (and what failed first)
 
-## Two contribution modes
+This project pre-registers criteria before running experiments and reports
+failures as failures. The atlas architecture is the third substrate tried,
+and the first to pass:
 
-Analog Quest runs as much as possible on volunteer compute. The idea is that
-idle Claude Code subscriptions are a real resource, and pointing them at a
-research project is a higher-value use than throwaway side projects.
+1. **Exact-hash equation matching** (the first-generation pipeline, below)
+   was diagnosed as structurally blind to its own target: cross-domain
+   isomorphisms are by definition the same structure in *different*
+   notation, and exact hashing only finds identical notation.
+2. **Pairwise LLM structural fingerprints** were measured twice against a
+   planted gold standard of 12 known cross-domain isomorphisms. The
+   pre-registered criterion (recall@25 ≥ 0.5) **failed both times**
+   (0.42, twice). Full analyses:
+   [v1](scripts/experiments/fingerprint/results/ANALYSIS-2026-07-05.md),
+   [v2](scripts/experiments/fingerprint/results/ANALYSIS-v2-2026-07-05.md).
+3. **Atlas classification** (each paper against fixed canonical templates,
+   in isolation) **passed** its pre-registered criteria: 0.93 classification
+   recall, 14/15 known isomorphisms recovered via the atlas join
+   (9/15 under the strict pre-equivalence reading — both numbers reported),
+   0.93 distractor precision, holding at 0.90 recall on a much cheaper
+   model. Analyses:
+   [atlas](scripts/experiments/atlas/results/ANALYSIS-2026-07-05.md),
+   [model A/B](scripts/experiments/atlas/results/HAIKU-AB-2026-07-05.md).
 
-**Mode A — Pipeline.** Your agent downloads arXiv source, extracts equations,
-normalizes them via SymPy, and submits the results. Needs Python + sympy +
-antlr4-python3-runtime installed locally. Best for people who want to move
-the bulk of the work forward on their own compute.
+The validation used a 54-paper gold standard; corpus-scale precision is a
+weaker, still-open question, which is why moderation is load-bearing.
 
-**Mode B — Abstract reader.** Your agent reads paper abstracts, identifies
-the mathematical structure, and submits a structural classification. Pure
-Claude Code — no local setup. Best for papers where LaTeX extraction fails.
+## Contributing compute
 
-Both modes require a GitHub account (used for attribution and rate-limiting).
-See [/contribute](https://analog.quest/contribute) to sign in, generate a
-bearer token, and paste a copy-to-agent message into any Claude Code session.
+Analog Quest runs as much as possible on volunteer compute: idle AI-agent
+subscriptions (e.g. Claude Code) pointed at a research project. The current
+contribution mode is the **atlas classifier** —
+[analog-quest-atlas.SKILL.md](https://analog.quest/analog-quest-atlas.SKILL.md):
+your agent pulls unclassified papers and the template library, classifies
+each paper's core model (0–2 templates; "no fit" is valid and common), and
+submits. Stateless, incremental, every paper is permanent progress. Requires
+GitHub sign-in at [/contribute](https://analog.quest/contribute) for
+attribution and rate limiting.
+
+Two earlier contribution modes (Mode A: local SymPy extraction; Mode B:
+abstract reading into a consensus queue) belong to the first-generation
+substrate and are kept for the record, not actively promoted.
+
+## The first-generation substrate (superseded, kept honestly)
+
+The original pipeline downloads arXiv LaTeX, extracts every equation,
+normalizes each into canonical SymPy form, and matches on exact hash
+equality. It processed 1,800+ papers into 39k equations (53.4% parse rate)
+and produced 2 cross-domain Tier 1 candidates — which is the measurement
+that motivated the pivot: the interesting matches are precisely the ones
+written in different notation, which exact hashing cannot see. The
+extraction corpus remains useful data; the matcher is no longer the
+project's spine. The old `/discoveries` view redirects to `/atlas`. The
+diagnosis and history live in [HANDOFF.md](./HANDOFF.md) and
+[docs/ROADMAP.md](./docs/ROADMAP.md).
 
 ---
 
 ## Architecture
 
 **Frontend:** Next.js 15 + TypeScript on Vercel. Radically minimal design
-(white background, black text, system font). Pages: `/` (home + activity feed),
-`/discoveries` (verified + Tier 1 candidates), `/contribute` (sign-in + mode
-selector), `/c/[username]` (contributor profiles), `/admin/review` (moderator
-triage UI), `/admin/moderators` (admin invite management), `/moderation`
-(public policy).
+(white background, black text, system font). Pages: `/` (home + activity
+feed), `/atlas` (the structure map: templates, fields, papers, bridges),
+`/contribute` (sign-in + contribution flow), `/c/[username]` (contributor
+profiles), `/admin/review` + `/admin/atlas` (moderator tools),
+`/admin/moderators` (invite management), `/moderation` (public policy).
 
 **Backend:** Same Next.js process, API routes under `/api/`. Auth via
 NextAuth v5 with GitHub provider, sessions stored in Postgres. Rate limiting
 via Upstash Redis (sliding window, per-user or per-IP).
 
-**Database:** PostgreSQL on Neon with pgvector extension. Key tables: `papers`,
-`equations`, `equation_matches`, `isomorphisms` (agent consensus tier),
-`contributors`, `moderator_invites`, `moderation_log`, `trivial_hashes`.
-Schema files live in `database/`.
+**Database:** PostgreSQL on Neon (via Vercel) with pgvector. Atlas tables:
+`atlas_templates`, `atlas_equivalences`, `atlas_classifications`,
+`atlas_trivia_templates`. First-generation tables: `papers`, `equations`,
+`equation_matches`, `isomorphisms`. Moderation/auth: `contributors`,
+`moderator_invites`, `moderation_log`, `trivial_hashes`. Schema files in
+`database/`.
 
-**Pipeline:** Python 3.9+ scripts under `scripts/`. The normalizer
-(`scripts/pipeline/normalize.py`) handles LaTeX preprocessing for conventions
-SymPy doesn't understand natively: `\leftarrow`, transpose operators,
-parenthesized time indices, gradient subscripts, font macros, Laplacian
-notation. Test suite at `scripts/tests/test_normalize.py`.
-
-**Scaling model:** the pipeline is designed to run on volunteer machines via
-Mode A. The project admin does not need to run continuous batch jobs on their
-own hardware — the whole point of the architecture is that compute scales
-with contributors.
+**Pipeline (legacy):** Python 3.9+ scripts under `scripts/`, SymPy-based
+LaTeX normalization with a 47-test suite. `scripts/experiments/` holds the
+fingerprint and atlas experiments with their gold standards and analyses.
 
 ---
 
@@ -96,7 +130,7 @@ npm install
 Create `.env.local` with:
 
 ```
-POSTGRES_URL=<your neon connection string>
+POSTGRES_URL=<your neon/postgres connection string>
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=<openssl rand -hex 32>
 GITHUB_CLIENT_ID=<github oauth app client id, dev>
@@ -109,9 +143,11 @@ Apply schemas:
 
 ```bash
 pip install -r scripts/requirements.txt
-python3 scripts/run_schema.py              # apply database/schema.sql
-# then apply database/equations_schema.sql and
-# database/auth_and_moderation_schema.sql manually via psql or neon console
+python3 scripts/run_schema.py                        # database/schema.sql
+python3 scripts/run_schema.py atlas_schema.sql       # atlas tables
+# also apply database/equations_schema.sql and
+# database/auth_and_moderation_schema.sql via psql or the console
+python3 scripts/seed_atlas_templates.py              # 50 templates + equivalences
 ```
 
 Run the dev server:
@@ -120,13 +156,12 @@ Run the dev server:
 npm run dev
 ```
 
-Run the pipeline:
+Legacy pipeline commands:
 
 ```bash
-python3 scripts/seed_queue.py              # fetch papers from arxiv
+python3 scripts/seed_queue.py                  # fetch papers from arxiv
 python3 scripts/run_pipeline.py --skip-embed   # extract + match
-python3 scripts/renormalize.py             # re-normalize after normalize.py changes
-python3 scripts/tests/test_normalize.py    # preprocessor unit tests
+python3 scripts/tests/test_normalize.py        # preprocessor unit tests
 ```
 
 ---
@@ -138,26 +173,21 @@ All write endpoints require a GitHub-authenticated NextAuth session or an
 
 | Method | Endpoint | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/queue/next` | user | Mode B: check out a paper |
-| POST | `/api/queue/submit` | user | Mode B: submit an extraction |
+| GET | `/api/atlas` | public | The atlas: structure groups, fields, papers, bridges |
+| GET | `/api/atlas/next-batch` | user | Unclassified papers + template library |
+| POST | `/api/atlas/classify` | user | Submit classifications |
+| GET/POST | `/api/admin/atlas` | moderator | Review groups; flag/restore trivia |
 | GET | `/api/queue/status` | public | Public stats |
-| GET | `/api/pipeline/next-batch` | user | Mode A: fetch a batch of papers |
-| POST | `/api/pipeline/submit-extractions` | user | Mode A: submit extracted equations |
-| GET | `/api/discoveries` | public | Verified isomorphisms (agent consensus) |
-| GET | `/api/matches` | public | Tier 1 candidates (pipeline output) with hash frequency |
 | GET | `/api/activity` | public | Recent activity feed |
 | POST | `/api/cli-tokens` | user | Generate a CLI bearer token |
 | GET/DELETE | `/api/cli-tokens`, `/api/cli-tokens/[id]` | user | List / revoke CLI tokens |
-| GET | `/api/admin/matches/next` | moderator | Fetch next pending candidate |
-| POST | `/api/admin/matches/[id]` | moderator | Promote or reject a candidate |
 | GET/POST | `/api/admin/invites` | admin | Moderator invite management |
 | POST | `/api/admin/invites/redeem` | user | Redeem a moderator invite |
 | GET | `/api/health` | public | Database health |
-
-Full per-field documentation in the two skill files:
-[analog-quest.SKILL.md](https://analog.quest/analog-quest.SKILL.md) (Mode B)
-and
-[analog-quest-pipeline.SKILL.md](https://analog.quest/analog-quest-pipeline.SKILL.md) (Mode A).
+| GET | `/api/queue/next`, POST `/api/queue/submit` | user | Legacy Mode B |
+| GET | `/api/pipeline/next-batch`, POST `/api/pipeline/submit-extractions` | user | Legacy Mode A |
+| GET | `/api/discoveries`, `/api/matches` | public | Legacy exact-hash views |
+| GET/POST | `/api/admin/matches/*` | moderator | Legacy match moderation |
 
 ---
 
@@ -166,27 +196,26 @@ and
 Analog Quest is not a scientific authority. It's an engine that surfaces
 candidates. The things we commit to doing:
 
-- **Label everything honestly.** Tier 1 is the default and most matches will
+- **Label everything honestly.** Tier 1 is the default and most bridges will
   stay there. Promotions require a written moderator note that becomes part
   of the public record.
+- **Pre-register, then report — pass or fail.** Experimental criteria are
+  fixed before the run. Two of this project's three substrates failed their
+  criteria; the analyses are linked above and stay published.
 - **Publish the failure modes.** [HANDOFF.md](./HANDOFF.md) documents what's
-  broken, what we've tried that didn't work, and what a new contributor or
-  agent would need to know to strengthen the approach.
-  [docs/ROADMAP.md](./docs/ROADMAP.md) is the ceiling-removal plan: what
-  structural limitations the project has, in priority order, and what
-  work removes each one.
+  broken, what we tried that didn't work, and what a new contributor or
+  agent needs to know. [docs/ROADMAP.md](./docs/ROADMAP.md) is the
+  ceiling-removal plan.
 - **Audit trail over trust.** Every moderator action writes to
   `moderation_log` with moderator, timestamp, action, and reason. Any action
   can be reversed by another moderator. The admin can revoke moderator roles.
-- **Openly acknowledge what the pipeline doesn't catch.** The current
-  canonicalizer misses custom macros, some tensor conventions, and any
-  notation SymPy can't parse. Real cross-domain matches will be missed for
-  notational reasons that have nothing to do with their content.
-
-The failure mode we're most worried about is surfacing common textbook
-objects and calling them discoveries. The trivia-list system is the current
-defense against that. [moderation policy](https://analog.quest/moderation)
-describes the full mechanism.
+- **Openly acknowledge the known failure mode.** By construction, the atlas
+  finds instances of *known* canonical structures, and it will happily
+  surface textbook objects two fields trivially share. The trivia flag is
+  the defense, and it requires active human moderation. Genuinely *novel*
+  shared structures — ones not in the template library — are beyond the
+  current system's reach and would need the pairwise path documented in the
+  fingerprint analyses.
 
 ---
 

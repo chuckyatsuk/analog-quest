@@ -1,7 +1,7 @@
 # Analog Quest — Handoff
 
 **Last substantive update:** 2026-04-12 (bulk of doc below)
-**Most recent session:** 2026-09-05 — revival dive: full state
+**Most recent session:** 2026-09-06 — sign-in fixed (GitHub RFC 9207 iss), admin role granted, account rename aligned. Previous: 2026-09-05 revival dive — full state
 verification, `docs/STATE-2026.md` + `docs/FUTURES-2026.md` written,
 weekly operating cadence begins. Read that session log first, then the
 2026-07-05 log (the atlas pivot), if you're picking up the project next.
@@ -10,6 +10,44 @@ weekly operating cadence begins. Read that session log first, then the
 **Stack:** Next.js 15 + TypeScript, PostgreSQL (Neon) + pgvector, Vercel,
 Python pipeline (SymPy), NextAuth v5 with GitHub OAuth, Upstash Redis for
 rate limiting.
+
+---
+
+## Session log — 2026-09-05/06 (sign-in fixed, admin unblocked, rename)
+
+Follow-on from the revival dive, working live with the owner.
+
+- **GitHub sign-in was broken in prod and is now fixed.** Root cause was
+  external: GitHub silently began sending an RFC 9207 `iss` parameter on
+  OAuth callbacks in April 2026 (community discussion #192143 — no
+  changelog); next-auth 5.0.0-beta.30 validates it against its
+  "https://authjs.dev" placeholder and rejected every sign-in with
+  `CallbackRouteError: unexpected "iss" (issuer) response parameter
+  value`. Diagnosed from Vercel runtime logs + a local callback replay
+  (with/without `iss` — only with-iss failed). Fix mirrors upstream
+  (nextauthjs/next-auth#13410): `issuer: 'https://github.com/login/oauth'`
+  on the GitHub provider (commit 2357b17). Owner verified sign-in
+  end-to-end. **Debt: upgrade next-auth past beta.30 in a normal cycle,
+  then drop the workaround.** Note: GitHub paused this rollout mid-April
+  and will resume it — unpatched apps on old next-auth will break then.
+  (A false trail worth recording: the OAuth client secret was suspected
+  first because `vercel env pull` returns sensitive-flagged values as the
+  literal "[SENSITIVE]" — never credential-test a pulled value without
+  checking its shape. The secret was fine; it was regenerated anyway and
+  the new one is in Vercel.)
+- **Admin promotion DONE (2026-09-06):** owner ran
+  `UPDATE contributors SET role='admin' WHERE github_id = 8813135` —
+  role verified admin. Moderation is unblocked for the first time ever.
+  (The SQL targets github_id because github_login stores the display
+  name, not the login.)
+- **GitHub account renamed** currentlycurrently → chuckyatsuk. All repo
+  references updated (d65d71e); numeric id 8813135 is the stable key, so
+  app auth records, OAuth, and the Vercel deploy hook all survived —
+  deploy hook verified by this session's pushes.
+- Still open for cycle 1: owner review of the `/api/queue/status`
+  one-line fix (last_seen → last_seen_at) and the README realignment;
+  future pick from docs/FUTURES-2026.md; first moderation pass (flag
+  gradient_descent etc. as trivia) now possible.
 
 ---
 

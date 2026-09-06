@@ -410,7 +410,7 @@ matter how many of each we have.
 
 ## Item 4 — Moderator recruitment
 
-**Current state:** zero moderators. The admin (currentlycurrently) is the
+**Current state:** zero moderators. The admin (chuckyatsuk) is the
 only person with review privileges. The invite system is built but has
 never been used.
 

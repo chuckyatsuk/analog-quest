@@ -5,7 +5,7 @@
 verification, `docs/STATE-2026.md` + `docs/FUTURES-2026.md` written,
 weekly operating cadence begins. Read that session log first, then the
 2026-07-05 log (the atlas pivot), if you're picking up the project next.
-**Repo:** https://github.com/currentlycurrently/analog-quest
+**Repo:** https://github.com/chuckyatsuk/analog-quest
 **Live site:** https://analog.quest
 **Stack:** Next.js 15 + TypeScript, PostgreSQL (Neon) + pgvector, Vercel,
 Python pipeline (SymPy), NextAuth v5 with GitHub OAuth, Upstash Redis for
@@ -409,7 +409,7 @@ paths work (`/`, `/discoveries`, `/contribute`). Auth flow is wired but
 NextAuth and GitHub OAuth have not been added at the time of this writing.
 See "What the admin still needs to do" below.
 
-**Admin:** The project's real-world admin is `currentlycurrently` on
+**Admin:** The project's real-world admin is `chuckyatsuk` (GitHub id 8813135; renamed from currentlycurrently 2026-09) on
 GitHub. The `contributors.role = 'admin'` flag must be set manually via SQL
 after their first sign-in. Once set, they gain access to `/admin/review`
 and `/admin/moderators`.
@@ -445,7 +445,9 @@ agent, only by the human with Vercel/Neon/GitHub access.
 
 4. **Run this SQL against Neon** to promote yourself to admin:
    ```sql
-   UPDATE contributors SET role = 'admin' WHERE github_login = 'currentlycurrently';
+   UPDATE contributors SET role = 'admin' WHERE github_id = 8813135;
+   -- (2026-09 correction: target the immutable github_id, not github_login —
+   -- the app stores the display name there, and the account was renamed)
    ```
 
 5. **Sign out and back in** so the session picks up the new role.

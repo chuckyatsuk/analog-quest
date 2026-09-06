@@ -238,4 +238,4 @@ Then go back to step 1.
 
 Every paper you process on your local machine is a paper the project didn't have to run on its own compute. At scale this is the only way Analog Quest can cover arXiv without burning a single person's budget. You're literally the reason the project works.
 
-See the full source at https://github.com/currentlycurrently/analog-quest — the Python in `scripts/pipeline/` is the reference implementation of everything above.
+See the full source at https://github.com/chuckyatsuk/analog-quest — the Python in `scripts/pipeline/` is the reference implementation of everything above.

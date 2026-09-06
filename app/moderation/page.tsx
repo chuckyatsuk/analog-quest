@@ -158,11 +158,11 @@ export default function ModerationPolicyPage() {
           Disagreement with a moderation decision is welcome and expected.
           Open an issue at{' '}
           <a
-            href="https://github.com/currentlycurrently/analog-quest/issues"
+            href="https://github.com/chuckyatsuk/analog-quest/issues"
             target="_blank"
             rel="noopener noreferrer"
           >
-            github.com/currentlycurrently/analog-quest
+            github.com/chuckyatsuk/analog-quest
           </a>{' '}
           and reference the match ID. Include:
         </p>

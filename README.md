@@ -88,7 +88,7 @@ with contributors.
 ## Running locally
 
 ```bash
-git clone https://github.com/currentlycurrently/analog-quest
+git clone https://github.com/chuckyatsuk/analog-quest
 cd analog-quest
 npm install
 ```

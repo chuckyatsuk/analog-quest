@@ -44,10 +44,22 @@ Follow-on from the revival dive, working live with the owner.
   references updated (d65d71e); numeric id 8813135 is the stable key, so
   app auth records, OAuth, and the Vercel deploy hook all survived —
   deploy hook verified by this session's pushes.
-- Still open for cycle 1: owner review of the `/api/queue/status`
-  one-line fix (last_seen → last_seen_at) and the README realignment;
-  future pick from docs/FUTURES-2026.md; first moderation pass (flag
-  gradient_descent etc. as trivia) now possible.
+- **Later on 2026-09-06 (same working session):** the queue/status fix
+  and the README realignment were owner-reviewed and SHIPPED (17dc2fd) —
+  `/api/queue/status` verified 200 in prod; README now leads with the
+  atlas and links the failed experiments as first-class content. A full
+  connected-services audit was done: 7 services (Vercel Pro, Neon via
+  Vercel Marketplace, Upstash under its own login email@analog.quest,
+  GitHub, Namecheap, Cloudflare DNS, and **Migadu** — newly discovered
+  email host for analog.quest, which owns the Upstash login mailbox);
+  all recorded in the owner's MESS ledger. Vercel env vars were
+  sensitive-flagged per Vercel's prompts — **`vercel env pull` is now
+  destructive** (returns "[SENSITIVE]" placeholders; the working
+  credentials live only in the local `.env.local`). Local checkout moved
+  to `~/Dev/chuckyatsuk-gh/analog-quest`.
+- Still open: future pick from docs/FUTURES-2026.md; GENESIS placement;
+  classification budget approval; first moderation pass (flag
+  gradient_descent etc. as trivia) — now possible and not yet done.
 
 ---
 

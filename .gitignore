@@ -95,3 +95,6 @@ archive/**/*.py
 !archive/large_files/
 !archive/sessions/*/
 
+
+# Local agent notes (never commit)
+AGENT-ORIENT.local.md
